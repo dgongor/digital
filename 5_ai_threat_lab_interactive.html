@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Threat Lab — Interactivo</title>
+<style>
+:root {
+  --bg:#0a0f1e; --bg2:#0f172a; --bg3:#1a2535; --bg4:#0c1530;
+  --border:#1e293b; --border2:#334155;
+  --text:#e2e8f0; --muted:#64748b; --dim:#94a3b8;
+  --red:#ef4444; --red-bg:#450a0a; --red-mid:#7f1d1d;
+  --orange:#f97316; --orange-bg:#431407;
+  --amber:#f59e0b; --amber-bg:#422006;
+  --green:#22c55e; --green-bg:#052e16; --green-dim:#14532d;
+  --blue:#3b82f6; --blue-bg:#0c1a4e; --blue-mid:#1d4ed8;
+  --purple:#c084fc; --purple-bg:#1e1040;
+  --teal:#06b6d4;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --sans:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+.fiction-bar{background:var(--blue-bg);border-bottom:1px solid #1d4ed8;padding:7px 18px;font-size:11px;color:#93c5fd;font-family:var(--mono)}
+.main-header{padding:12px 18px 0}
+.main-title{font-family:var(--mono);font-size:1.2rem;font-weight:600;margin-bottom:3px;color:#f8fafc;border-left:3px solid var(--red);padding-left:11px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.main-sub{font-size:11px;color:var(--muted);margin-bottom:10px;padding-left:15px}
+.ibadge{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;padding:0 18px;background:var(--bg)}
+.tab{padding:9px 13px;font-size:12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;transition:all .15s;font-family:var(--sans)}
+.tab:hover{color:var(--text)}.tab.on{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.pane{display:none;padding:14px 18px}
+.pane.on{display:block}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10.5px;font-family:var(--mono);font-weight:500}
+.b-r{background:#450a0a;color:#f87171}.b-o{background:#431407;color:#fb923c}
+.b-y{background:#422006;color:#fbbf24}.b-g{background:#052e16;color:#4ade80}
+.b-b{background:#0c1a4e;color:#93c5fd}.b-p{background:#1e1040;color:#c4b5fd}
+.b-gr{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:6px 0}
+.stage{border-radius:8px;padding:10px 14px;margin:4px 0;font-family:var(--mono);font-size:11.5px;line-height:1.6;border:1px solid}
+.sl{font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;opacity:.65}
+.arrow{text-align:center;color:#475569;font-size:14px;margin:3px 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}
+.mbox{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;transition:all .4s}
+.mnum{font-size:22px;font-weight:600;font-family:var(--mono);transition:color .4s}
+.mlbl{font-size:10px;color:var(--muted);margin-top:2px}
+.finding-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.finding-row:last-child{border-bottom:none}
+.banner-r{background:#1c0808;border:1px solid var(--red-mid);border-radius:8px;padding:14px 16px;margin:8px 0}
+.banner-g{background:var(--green-bg);border:1px solid var(--green-dim);border-radius:8px;padding:14px 16px;margin:8px 0}
+.fiction-inline{background:var(--blue-bg);border:1px solid #1d4ed8;border-radius:6px;padding:7px 12px;font-size:11px;color:#93c5fd;margin-bottom:12px;font-family:var(--mono)}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+.toggle-track{position:relative;width:36px;height:20px;border-radius:10px;cursor:pointer;background:var(--border2);border:1px solid #475569;flex-shrink:0;transition:background .2s}
+.toggle-track.on{background:#16a34a;border-color:#16a34a}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .2s}
+.toggle-track.on .toggle-knob{transform:translateX(16px)}
+.threat-card{border-radius:8px;padding:12px 14px;border:1px solid var(--border);background:var(--bg2)}
+.ev-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:5px 0;font-size:11px;font-family:var(--mono)}
+.ev-card.crit{border-left:2.5px solid #dc2626}.ev-card.high{border-left:2.5px solid #f97316}.ev-card.blkd{border-left:2.5px solid #22c55e}
+input,select,textarea{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:7px 10px;font-size:11px;width:100%;font-family:var(--sans)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+button{background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:7px 14px;cursor:pointer;font-size:11px;font-family:var(--sans);transition:background .15s}
+button:hover{background:var(--bg3)}
+button.primary{background:var(--blue-mid);border-color:var(--blue-mid);font-weight:500}
+button.primary:hover{background:#1e40af}
+
+/* ── INTERACTIVE NEW ELEMENTS ── */
+.editor-group{background:var(--bg2);border:1px solid var(--border);border-radius:9px;margin-bottom:11px;overflow:hidden}
+.editor-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg4);border-bottom:1px solid var(--border)}
+.elabel{font-size:11px;font-weight:600;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;flex:1}
+.etag{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:99px}
+.tag-edit{background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.tag-danger{background:rgba(239,68,68,.13);color:#f87171;border:1px solid rgba(239,68,68,.28)}
+.tag-live{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
+.editor-body{padding:10px 12px}
+textarea.ied{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:11px;line-height:1.7;resize:vertical;min-height:70px;outline:none}
+textarea.ied::placeholder{color:var(--muted)}
+textarea.ied:focus{background:rgba(59,130,246,.025)}
+
+.live-ind{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--teal);font-family:var(--mono)}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+
+/* DLP rules editor */
+.dlp-rule-row{display:grid;grid-template-columns:1fr 70px 120px 28px;gap:8px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border);font-size:11px;transition:background .15s}
+.dlp-rule-row:last-child{border-bottom:none}
+.dlp-rule-row:hover{background:rgba(255,255,255,.02)}
+.dlp-rule-row.disabled{opacity:.4}
+
+/* Highlighted text */
+.hl-crit{background:rgba(239,68,68,.25);color:#fca5a5;border-radius:2px;padding:0 2px}
+.hl-high{background:rgba(249,115,22,.2);color:#fdba74;border-radius:2px;padding:0 2px}
+.hl-med{background:rgba(245,158,11,.15);color:#fde047;border-radius:2px;padding:0 2px}
+
+.score-track{background:var(--bg3);border-radius:4px;height:7px;overflow:hidden;margin:4px 0}
+.score-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.smallbtn{font-size:10px;background:var(--bg3);border:1px solid var(--border);color:var(--dim);border-radius:4px;padding:3px 8px;cursor:pointer;width:auto}
+.smallbtn:hover{border-color:var(--blue);color:var(--text)}
+.sec-lbl{font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* Sandbox outcome */
+.sb-out{font-size:11px;font-family:var(--mono);padding:10px 12px;border-radius:7px;background:var(--bg2);border:1px solid var(--border);line-height:1.6;transition:all .3s}
+.sb-out.att{background:var(--red-bg);border-color:var(--red-mid);color:#fca5a5}
+.sb-out.ok{background:var(--green-bg);border-color:var(--green-dim);color:#4ade80}
+.sb-out.blk{background:var(--green-bg);border-color:var(--green-dim);color:#4ade80}
+
+@media(max-width:800px){.g2{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="fiction-bar">&#x26A0;&#xFE0F; LABORATORIO DID&Aacute;CTICO &mdash; Todos los datos son completamente ficticios. No se procesa ni transmite informaci&oacute;n real. Uso exclusivo para formaci&oacute;n en ciberseguridad corporativa.</div>
+
+<div class="main-header">
+  <div class="main-title">
+    &#x1F534; Nuevo Modelo de Amenazas &middot; IA Generativa
+    <span class="ibadge">&#x2736; INTERACTIVO</span>
+  </div>
+  <div class="main-sub">GenCorp Espa&ntilde;a S.L. &middot; Shadow AI &middot; Fuga de datos &middot; Dependencia de proveedor &middot; P&eacute;rdida de per&iacute;metro</div>
+</div>
+
+<div class="tabs">
+  <button class="tab on"  onclick="sw('sc',this)">Escenarios narrativos</button>
+  <button class="tab"     onclick="sw('demo',this)">Demo: env&iacute;o y detecci&oacute;n</button>
+  <button class="tab"     onclick="sw('sandbox',this)">&#x270F;&#xFE0F; Sandbox DLP</button>
+  <button class="tab"     onclick="sw('trace',this)">Panel de trazabilidad</button>
+  <button class="tab"     onclick="sw('threats',this)">Mapa de amenazas</button>
+  <button class="tab"     onclick="sw('controls',this)">Controles</button>
+</div>
+
+<!-- ══ TAB: SCENARIOS ══ -->
+<div id="pane-sc" class="pane on">
+  <div class="fiction-inline">Los datos (nombres, DNIs, IBANs) se generan aleatoriamente. <strong>Edita el texto de la derecha</strong> para ver c&oacute;mo cambia la detecci&oacute;n en tiempo real.</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <button onclick="showScenario('rrhh')">&#x1F465; RRHH</button>
+    <button onclick="showScenario('finance')">&#x1F4B0; Finanzas</button>
+    <button onclick="showScenario('dev')">&#x1F4BB; Ingenier&iacute;a</button>
+    <button onclick="showScenario('legal')">&#x2696;&#xFE0F; Jur&iacute;dico</button>
+    <button class="smallbtn" onclick="showScenario(currentScKey)" style="margin-left:auto">&#x1F504; Regenerar datos</button>
+  </div>
+  <div class="g2">
+    <div>
+      <div id="sc-narrative"></div>
+      <div id="sc-risk-box" style="margin-top:10px"></div>
+      <div id="sc-explain" style="margin-top:10px"></div>
+    </div>
+    <div>
+      <div class="editor-group">
+        <div class="editor-header">
+          <span class="elabel">Texto enviado a la IA &mdash; datos ficticios</span>
+          <span class="etag tag-edit">&#x2736; editable</span>
+          <span class="live-ind" style="margin-left:4px"><span class="ldot"></span>an&aacute;lisis en vivo</span>
+          <button class="smallbtn" onclick="rescanSc()" style="margin-left:6px">&#x1F50D;</button>
+        </div>
+        <div class="editor-body">
+          <textarea class="ied" id="sc-text" rows="11" oninput="rescanSc()" style="min-height:190px" placeholder="Selecciona un escenario..."></textarea>
+        </div>
+      </div>
+      <div id="sc-findings"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: DEMO ══ -->
+<div id="pane-demo" class="pane">
+  <div class="toggle-row">
+    <div class="toggle-track" id="dlp-toggle" onclick="toggleDLP()"><div class="toggle-knob"></div></div>
+    <div>
+      <span style="font-size:12px;font-weight:500" id="dlp-label">Controles DLP: DESACTIVADOS</span>
+      <div style="font-size:11px;color:var(--muted)" id="dlp-desc">&mdash; El dato saldr&aacute; del per&iacute;metro</div>
+    </div>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted)">Activa para ver el bloqueo</div>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="editor-group">
+        <div class="editor-header">
+          <span class="elabel">Configuraci&oacute;n del env&iacute;o</span>
+          <span class="etag tag-edit">&#x2736; editable</span>
+        </div>
+        <div class="editor-body" style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <div class="sec-lbl">Actor (nombre ficticio)</div>
+            <input type="text" id="demo-actor" value="Carmen L&oacute;pez &mdash; T&eacute;cnico RRHH">
+          </div>
+          <div>
+            <div class="sec-lbl">Herramienta de IA utilizada</div>
+            <select id="demo-provider" onchange="updateProviderInfo()">
+              <option value="openai">ChatGPT (cuenta personal, sin DPA)</option>
+              <option value="copilot">Microsoft Copilot (tenant sin DLP)</option>
+              <option value="github">GitHub Copilot (sin whitelisting)</option>
+              <option value="free">IA personal gratuita (desconocida)</option>
+            </select>
+          </div>
+          <div id="provider-info" style="font-size:11px"></div>
+          <div>
+            <div class="sec-lbl">Cargar escenario r&aacute;pido</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="loadScenario('rrhh')">RRHH</button>
+              <button onclick="loadScenario('finance')">Finanzas</button>
+              <button onclick="loadScenario('dev')">Dev</button>
+              <button onclick="loadScenario('legal')">Jur&iacute;dico</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="editor-group">
+        <div class="editor-header">
+          <span class="elabel">Texto a enviar a la IA</span>
+          <span class="etag tag-edit">&#x2736; editable</span>
+          <span class="live-ind" style="margin-left:4px"><span class="ldot"></span>an&aacute;lisis en vivo</span>
+        </div>
+        <div class="editor-body">
+          <textarea id="demo-text" class="ied" style="height:130px;resize:vertical" placeholder="Pega texto o carga un escenario..." oninput="livePreview()"></textarea>
+          <div id="live-prev" style="font-size:11px;font-family:var(--mono);margin-top:5px"></div>
+        </div>
+      </div>
+      <button class="primary" onclick="sendDemo()" style="width:100%;font-size:12px">&#x1F680; ENVIAR A LA IA EXTERNA</button>
+    </div>
+    <div>
+      <div class="sec-lbl">Flujo en tiempo real</div>
+      <div id="demo-flow" style="min-height:200px">
+        <div style="text-align:center;color:#334155;padding:40px 20px;font-size:12px">Carga un escenario y pulsa ENVIAR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: SANDBOX DLP ══ -->
+<div id="pane-sandbox" class="pane">
+  <div class="fiction-inline">Sandbox interactivo: edita el texto, activa/desactiva reglas DLP individualmente y observa en tiempo real qu&eacute; se detecta, qu&eacute; datos se resaltan y qu&eacute; ocurrrir&iacute;a si se enviara.</div>
+  <div class="g2">
+    <div>
+      <div class="editor-group">
+        <div class="editor-header">
+          <span class="elabel">Texto a analizar</span>
+          <span class="etag tag-edit">&#x2736; editable</span>
+          <span class="live-ind" style="margin-left:4px"><span class="ldot"></span>an&aacute;lisis en vivo</span>
+        </div>
+        <div class="editor-body">
+          <textarea class="ied" id="sb-text" rows="9" oninput="updateSb()" style="min-height:170px" placeholder="Escribe texto con datos sensibles para analizar...
+
+Ejemplos:
+  DNI: 12345678Z
+  Tel&eacute;fono: 612345678
+  IBAN: ES91 2100 0418 4502 0005 1332
+  password = 'MiContrasena2024!'
+  SELECT * FROM users WHERE id = 1
+  IP: 192.168.1.100"></textarea>
+          <div style="margin-top:5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span id="sb-chars" style="font-size:10px;color:var(--muted);font-family:var(--mono)">0 chars</span>
+            <span id="sb-risk-live" style="font-size:10px;font-family:var(--mono)"></span>
+            <div style="margin-left:auto;display:flex;gap:5px">
+              <button class="smallbtn" onclick="loadSbTpl('rrhh')">RRHH</button>
+              <button class="smallbtn" onclick="loadSbTpl('finance')">Finanzas</button>
+              <button class="smallbtn" onclick="loadSbTpl('dev')">Dev</button>
+              <button class="smallbtn" onclick="document.getElementById('sb-text').value='';updateSb()">&times;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-group">
+        <div class="editor-header">
+          <span class="elabel">Reglas DLP &mdash; activa / desactiva individualmente</span>
+          <span class="etag tag-danger">&#x26A0; control cr&iacute;tico</span>
+          <button class="smallbtn" onclick="toggleAllRules(true)" style="margin-left:auto">Todo</button>
+          <button class="smallbtn" onclick="toggleAllRules(false)">Ninguno</button>
+        </div>
+        <div id="dlp-rules-editor" style="padding:0"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-lbl">Hallazgos &mdash; en tiempo real</div>
+      <div id="sb-findings" style="min-height:60px;margin-bottom:10px"></div>
+
+      <div class="sec-lbl">Texto con datos resaltados</div>
+      <div id="sb-highlighted" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:1.8;white-space:pre-wrap;word-break:break-word;min-height:100px;max-height:180px;overflow-y:auto;color:var(--dim);margin-bottom:10px">El texto resaltado aparecer&aacute; aqu&iacute;...</div>
+
+      <div class="sec-lbl">Score de riesgo DLP</div>
+      <div id="sb-score" style="margin-bottom:12px"></div>
+
+      <div class="sec-lbl">Simulaci&oacute;n de env&iacute;o</div>
+      <div style="display:flex;gap:7px;margin-bottom:7px">
+        <select id="sb-prov" style="flex:1" onchange="updateSb()">
+          <option value="openai">ChatGPT (sin DPA)</option>
+          <option value="copilot">Copilot (con DPA)</option>
+          <option value="free">IA gratuita (sin DPA)</option>
+        </select>
+        <select id="sb-dlp" style="flex:1" onchange="updateSb()">
+          <option value="1">DLP activo</option>
+          <option value="0">DLP inactivo</option>
+        </select>
+      </div>
+      <div id="sb-outcome" class="sb-out">Escribe texto para ver el resultado simulado...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: TRACE ══ -->
+<div id="pane-trace" class="pane">
+  <div class="metrics" id="trace-metrics"></div>
+  <div class="g2" style="margin-top:10px">
+    <div>
+      <div class="sec-lbl">Registro de eventos</div>
+      <div id="trace-events"></div>
+      <button onclick="clearTrace()" style="margin-top:8px;font-size:10px">Limpiar log</button>
+    </div>
+    <div>
+      <div class="sec-lbl">Proveedores implicados</div>
+      <div id="trace-providers"></div>
+      <div class="sec-lbl" style="margin-top:12px">Actores</div>
+      <div id="trace-actors"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: THREATS ══ -->
+<div id="pane-threats" class="pane">
+  <div id="threats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-bottom:16px"></div>
+  <div class="sec-lbl">Matriz de riesgo por caso de uso</div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono)">
+      <thead><tr style="border-bottom:1px solid var(--border);color:#475569;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px">
+        <th style="padding:6px 8px;text-align:left">Caso de uso</th><th style="padding:6px 8px;text-align:left">Herramienta</th>
+        <th style="padding:6px 8px;text-align:left">Datos</th><th style="padding:6px 8px;text-align:left">Riesgo</th>
+        <th style="padding:6px 8px;text-align:left">Normativa</th>
+      </tr></thead>
+      <tbody id="risk-matrix"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ TAB: CONTROLS ══ -->
+<div id="pane-controls" class="pane">
+  <div id="controls-list"></div>
+  <div style="margin-top:16px" class="sec-lbl">Marco de gobierno</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x1F5FA;&#xFE0F;</div><div style="font-size:11px;font-weight:500;margin:4px 0">Inventario</div><div style="font-size:10px;color:var(--muted)">Herramientas de IA en uso</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x1F4CB;</div><div style="font-size:11px;font-weight:500;margin:4px 0">Pol&iacute;tica de uso</div><div style="font-size:10px;color:var(--muted)">Qu&eacute; puede enviarse</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x2696;&#xFE0F;</div><div style="font-size:11px;font-weight:500;margin:4px 0">DPA contractual</div><div style="font-size:10px;color:var(--muted)">Con cada proveedor IA</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x1F50D;</div><div style="font-size:11px;font-weight:500;margin:4px 0">Auditor&iacute;a continua</div><div style="font-size:10px;color:var(--muted)">Revisi&oacute;n de logs</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x1F393;</div><div style="font-size:11px;font-weight:500;margin:4px 0">Formaci&oacute;n</div><div style="font-size:10px;color:var(--muted)">Concienciaci&oacute;n IA</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:1.2rem">&#x1F6A8;</div><div style="font-size:11px;font-weight:500;margin:4px 0">IR plan IA</div><div style="font-size:10px;color:var(--muted)">Respuesta a fugas</div></div>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────────────
+let dlpActive=false, auditLog=[], currentScKey='rrhh';
+
+function sw(id,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pane-'+id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  if(id==='trace') renderTrace();
+  if(id==='threats') renderThreats();
+  if(id==='controls') renderControls();
+  if(id==='sandbox'){buildRulesEditor();updateSb();}
+}
+
+function toggleDLP(){
+  dlpActive=!dlpActive;
+  document.getElementById('dlp-toggle').classList.toggle('on',dlpActive);
+  document.getElementById('dlp-label').textContent='Controles DLP: '+(dlpActive?'ACTIVADOS':'DESACTIVADOS');
+  document.getElementById('dlp-label').style.color=dlpActive?'#4ade80':'#f87171';
+  document.getElementById('dlp-desc').textContent=dlpActive?'— El dato será interceptado':'— El dato saldrá del perímetro';
+}
+
+const NAMES=['Alejandro Martín Ruiz','Carmen López Sanz','Miguel Fernández Gil','Laura Torres Vega'];
+const DEPTS=['Recursos Humanos','Finanzas','Ingeniería','Ventas','Jurídico'];
+const DOMAINS=['gencorp.es','techfirma.com','grupomercado.es'];
+function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+function fEmail(n){const p=n.toLowerCase().split(' ');return `${p[0]}.${p[p.length-1]}@${rnd(DOMAINS)}`;}
+function fDNI(){const n=Math.floor(Math.random()*89999999)+10000000;return n+'TRWAGMYFPDXBNJZSQVHLCKE'[n%23];}
+function fPhone(){return '6'+Array.from({length:8},()=>Math.floor(Math.random()*10)).join('');}
+function fIBAN(){const b=['2100','0049','0081'][Math.floor(Math.random()*3)];const d=Array.from({length:16},()=>Math.floor(Math.random()*10)).join('');return `ES${Math.floor(Math.random()*89)+10} ${b} ${d.slice(0,4)} ${d.slice(4,8)} ${d.slice(8,12)} ${d.slice(12,16)}`;}
+function fCard(){const p=['4532','5412'][Math.floor(Math.random()*2)];const d=Array.from({length:12},()=>Math.floor(Math.random()*10)).join('');return `${p}${d.slice(0,4)} ${d.slice(4,8)} ${d.slice(8,12)} ${Array.from({length:4},()=>Math.floor(Math.random()*10)).join('')}`;}
+function fIP(){return `192.168.${Math.floor(Math.random()*10)+1}.${Math.floor(Math.random()*190)+10}`;}
+function fRef(){return `CTR-${2020+Math.floor(Math.random()*5)}${Math.floor(Math.random()*9000)+1000}`;}
+
+
+const SC = {
+  rrhh:()=>{const n=rnd(NAMES),e=fEmail(n),d=fDNI(),ph=fPhone(),ref=fRef();return{title:'RRHH usa ChatGPT para redactar evaluaciones',actor:'Técnico de RRHH',tool:'ChatGPT (cuenta personal)',narrative:'Un técnico de RRHH usa su cuenta personal de ChatGPT para mejorar evaluaciones. Pega el texto completo del expediente incluyendo datos médicos del empleado. El contenido sale del perímetro hacia un proveedor externo sin DPA firmado.',text:`Resumen evaluación de desempeño — ${rnd(DEPTS)}\n\nEmpleado: ${n}\nDNI: ${d}\nEmail corporativo: ${e}\nTeléfono: ${ph}\n\nObservaciones:\nEl empleado presenta diagnóstico de ansiedad generalizada y está en tratamiento con medicación prescrita. Se recomienda reducción de carga de trabajo.\n\nExpediente: ${ref}`};},
+  finance:()=>{const n=rnd(NAMES),e=fEmail(n),ph=fPhone(),ib=fIBAN(),ref=fRef();return{title:'Financiero pide a Copilot resumir propuesta M&A',actor:'Analista financiero',tool:'Microsoft Copilot (tenant sin DLP)',narrative:'Un analista financiero usa Copilot en un tenant sin política DLP para resumir una propuesta de M&A confidencial. El IBAN de la cuenta destino y la valoración de la empresa salen del perímetro.',text:`PROPUESTA DE ADQUISICIÓN — CONFIDENCIAL\nReferencia: ${ref}\n\nEmpresa objetivo: TechStartup SL\nValoración: 4.200.000 €\nContacto: ${n} | ${e} | ${ph}\n\nDatos bancarios transferencia:\nIBAN: ${ib}\n\nDeuda actual: 1.2M€ | EBITDA: 340K€/año`};},
+  dev:()=>{const ip=fIP();return{title:'Dev pega código interno en GitHub Copilot',actor:'Desarrollador senior',tool:'GitHub Copilot (sin restricciones)',narrative:'Un desarrollador usa GitHub Copilot sin restricción de repositorio. El IDE envía el fichero completo al API de GitHub, incluyendo credenciales hardcodeadas y una vulnerabilidad SQL injection conocida.',text:`# Módulo de autenticación — INTERNO — NDA 2027\n\nimport jwt\n\nSECRET_KEY = "xK9#mP2$qL7@nR4"  # producción\nDB_HOST = "${ip}"\nDB_PASS = "Empresa2024!Prod"\n\ndef authenticate_user(username: str):\n    # SELECT * FROM users WHERE username = '{username}'\n    # TODO: SQL injection conocida — pendiente parche\n    ...`};},
+  legal:()=>{const n=rnd(NAMES),d=fDNI(),e=fEmail(n),ph=fPhone(),c=fCard(),ib=fIBAN(),ref=fRef();return{title:'Jurídico resume contratos con PII en IA personal',actor:'Abogado interno',tool:'IA personal gratuita',narrative:'Un abogado usa una cuenta gratuita personal para resumir contratos de clientes. El contrato incluye DNI, tarjeta y IBAN del cliente. La cláusula de confidencialidad del propio contrato prohíbe exactamente esto.',text:`CONTRATO DE SERVICIOS — CLIENTE FINAL\nReferencia: ${ref}\n\nParte contratante: ${n}\nDNI: ${d} | Email: ${e} | Tel: ${ph}\n\nTarjeta de pago: ${c}\nIBAN domiciliación: ${ib}\n\nCláusula confidencialidad:\nEl presente contrato tiene carácter estrictamente confidencial.\nProhibida su transmisión a terceros sin autorización expresa.`};}
+};
+
+const PROVS = {
+  openai:{name:'ChatGPT (cuenta personal)',jur:'EE.UU.',dpa:false,ret:'30 días (entrenamiento posible)',note:'Sin DPA corporativo. Datos pueden usarse para entrenamiento del modelo.'},
+  copilot:{name:'Microsoft Copilot (tenant sin DLP)',jur:'EE.UU./EU',dpa:true,ret:'29 días',note:'DPA firmado, pero sin política DLP activa en el tenant corporativo.'},
+  github:{name:'GitHub Copilot (sin whitelisting)',jur:'EE.UU.',dpa:true,ret:'Sin retención declarada',note:'Envía contexto completo del fichero activo al API de GitHub.'},
+  free:{name:'IA personal gratuita',jur:'Desconocida',dpa:false,ret:'Indefinida',note:'Sin DPA, sin garantías. Cuenta personal sin trazabilidad corporativa.'}
+};
+
+// ── DLP RULES (now with active flags for sandbox) ──────────────
+const DLP=[
+  {name:'DNI/NIF español',re:/\b\d{8}[A-Z]\b/g,cat:'PII — Identidad',risk:'critical',reg:'GDPR Art. 9',threats:['Fuga de datos','Incumplimiento normativo']},
+  {name:'Email corporativo',re:/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|es|org|net)\b/g,cat:'PII — Contacto',risk:'high',reg:'GDPR Art. 6',threats:['Fuga de datos','Shadow AI']},
+  {name:'Teléfono',re:/\b[6789]\d{8}\b/g,cat:'PII — Contacto',risk:'high',reg:'GDPR Art. 6',threats:['Fuga de datos']},
+  {name:'IBAN',re:/\bES\d{2}[\s\d]{10,}\b/g,cat:'Financiero — IBAN',risk:'critical',reg:'PCI-DSS / GDPR',threats:['Fuga de datos','Incumplimiento normativo']},
+  {name:'Tarjeta de crédito',re:/\b(?:4\d{3}|5[1-5]\d{2})[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,cat:'Financiero — Tarjeta',risk:'critical',reg:'PCI-DSS Req. 3',threats:['Fuga de datos','Incumplimiento normativo']},
+  {name:'IP interna (RFC1918)',re:/\b192\.168\.\d{1,3}\.\d{1,3}\b/g,cat:'Técnico — Red interna',risk:'high',reg:'ISO 27001 A.13',threats:['Pérdida de perímetro']},
+  {name:'Credencial / contraseña',re:/(?:SECRET_KEY|DB_PASS|password|api[_-]?key)\s*[=:]\s*["']?\S+/gi,cat:'Credenciales',risk:'critical',reg:'ISO 27001 A.9',threats:['Fuga de datos','Pérdida de perímetro']},
+  {name:'Referencia interna',re:/\bCTR-\d{4,8}\b/g,cat:'Negocio — Referencia',risk:'medium',reg:'Política interna',threats:['Shadow AI']},
+  {name:'Dato médico / salud',re:/(?:diagnóstico|diagnos|medicación|medicaci|ansiedad|tratamiento|prescripci)/gi,cat:'Salud — Categoría especial',risk:'critical',reg:'GDPR Art. 9',threats:['Fuga de datos','Incumplimiento normativo']},
+  {name:'Código fuente interno',re:/(?:def |class |SELECT\s+\*|INSERT\s+INTO|function\s+\w+\s*\()/gi,cat:'Propiedad intelectual',risk:'high',reg:'Trade secrets / NDA',threats:['Shadow AI']},
+];
+
+// Make rules mutable for sandbox
+let DLP_ACTIVE = DLP.map(()=>true);
+
+function scanText(txt){
+  const found=[],seen=new Set();
+  for(let pi=0;pi<DLP.length;pi++){const p=DLP[pi];if(!DLP_ACTIVE[pi])continue;
+    for(const m of txt.matchAll(p.re)){
+      const k=`${p.name}:${m.index}`;if(seen.has(k))continue;seen.add(k);
+      const r=m[0],v=Math.max(2,Math.floor(r.length/4));
+      found.push({...p,matched:r,redacted:r.slice(0,v)+'*'.repeat(Math.max(0,r.length-v*2))+r.slice(-v),pos:m.index});
+    }
+  }
+  found.sort((a,b)=>['critical','high','medium','low'].indexOf(a.risk)-['critical','high','medium','low'].indexOf(b.risk));
+  return found;
+}
+
+function oRisk(f){return f.length?f[0].risk:'low';}
+function rColor(r){{const m={critical:'#f87171',high:'#f97316',medium:'#fbbf24',low:'#4ade80'};return m[r]||'#94a3b8';}}
+function rBadge(r){const m={critical:'b-r',high:'b-o',medium:'b-y',low:'b-g'};return `<span class="badge ${m[r]||'b-gr'}">${r.toUpperCase()}</span>`;}
+
+
+// ── SCENARIOS ───────────────────────────────────────────────────
+function showScenario(key){
+  currentScKey=key;
+  const sc=SC[key]();
+  const f=scanText(sc.text),r=oRisk(f),rc=rColor(r);
+  document.getElementById('sc-narrative').innerHTML=`<div class="card" style="border-left:2.5px solid ${rc}"><div style="font-size:12px;font-weight:600;margin-bottom:6px">${sc.title}</div><div style="font-size:11px;color:#94a3b8;line-height:1.6">${sc.narrative}</div><div style="margin-top:8px;font-size:11px;color:#64748b">Actor: <span style="color:#e2e8f0">${sc.actor}</span> | Herramienta: <span style="color:#e2e8f0">${sc.tool}</span></div></div>`;
+  document.getElementById('sc-risk-box').innerHTML=renderRiskBox(r,rc,f);
+  document.getElementById('sc-text').value=sc.text;
+  renderScFindings(f);
+  document.getElementById('sc-explain').innerHTML=`<div class="card" style="border-left:2px solid #334155"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#475569;margin-bottom:5px">Punto didáctico</div><div style="font-size:11px;color:#94a3b8;line-height:1.5">Edita el texto de la derecha para ver cómo cambia la detección en tiempo real. Prueba a borrar el DNI o añadir un IBAN.</div></div>`;
+}
+
+function renderRiskBox(r,rc,f){
+  return `<div style="background:#0f172a;border:1px solid ${rc};border-radius:8px;padding:12px 14px"><div style="color:#475569;font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Riesgo detectado</div><div style="color:${rc};font-size:18px;font-weight:600;margin-bottom:8px">${r.toUpperCase()} — ${f.length} tipo(s) de dato sensible</div><div>${[...new Set(f.map(x=>x.cat))].map(c=>`<span class="badge b-r" style="margin:2px">${c}</span>`).join('') || '<span style="color:#4ade80">Sin datos sensibles</span>'}</div></div>`;
+}
+
+function rescanSc(){
+  const txt=document.getElementById('sc-text').value;
+  const f=scanText(txt),r=oRisk(f),rc=rColor(r);
+  document.getElementById('sc-risk-box').innerHTML=renderRiskBox(r,rc,f);
+  renderScFindings(f);
+}
+
+function renderScFindings(f){
+  document.getElementById('sc-findings').innerHTML=f.length
+    ?'<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:4px">Datos sensibles detectados</div>'
+     +f.map(x=>`<div class="finding-row">${rBadge(x.risk)}<span style="color:#e2e8f0;flex:1">${x.name}</span><span style="color:#64748b;font-family:monospace">${x.redacted}</span><span style="color:#475569;font-size:10px">${x.reg}</span></div>`).join('')
+    :'<div style="font-size:11px;color:#4ade80;padding:6px 0">✓ Sin datos sensibles detectados en el texto editado</div>';
+}
+
+function updateProviderInfo(){
+  const p=PROVS[document.getElementById('demo-provider').value];
+  document.getElementById('provider-info').innerHTML=`<span class="badge ${p.dpa?'b-g':'b-r'}">${p.dpa?'DPA ✓':'Sin DPA ⛔'}</span> <span class="badge b-b">${p.jur}</span> <span class="badge b-gr">Ret: ${p.ret}</span><div style="margin-top:4px;color:${p.dpa?'#64748b':'#f87171'}">${p.note}</div>`;
+}
+
+function loadScenario(k){const sc=SC[k]();document.getElementById('demo-text').value=sc.text;document.getElementById('demo-actor').value=sc.actor;livePreview();}
+
+function livePreview(){
+  const t=document.getElementById('demo-text').value;
+  if(t.length<10){document.getElementById('live-prev').innerHTML='';return;}
+  const f=scanText(t),r=oRisk(f);
+  document.getElementById('live-prev').innerHTML=f.length?`<span style="color:${rColor(r)};font-family:monospace">⚡ ${f.length} dato(s) sensible(s) — ${r.toUpperCase()}</span>`:'<span style="color:#4ade80;font-family:monospace">✓ Sin datos sensibles</span>';
+}
+
+async function sendDemo(){
+  const txt=document.getElementById('demo-text').value;
+  if(!txt||txt.length<10)return;
+  const actor=document.getElementById('demo-actor').value||'Empleado';
+  const pk=document.getElementById('demo-provider').value;
+  const prov=PROVS[pk];
+  const f=scanText(txt),r=oRisk(f),rc=rColor(r);
+  const flowEl=document.getElementById('demo-flow');
+  let html='';
+
+  html+=`<div class="stage" style="border-color:#1d4ed8;background:#0c1a4e"><div class="sl">Etapa 1 — Input del empleado</div><span style="color:#93c5fd">Actor: ${actor} → ${prov.name} · ${txt.length} chars</span></div><div class="arrow">↓</div>`;
+  if(f.length){
+    html+=`<div class="stage" style="border-color:#92400e;background:#431407"><div class="sl">Etapa 2 — Escáner DLP · ${f.length} hallazgo(s) · ${r.toUpperCase()}</div>${f.map(x=>`<div style="color:#fbbf24;font-size:10.5px">▸ ${x.name}: <span style="opacity:.7">${x.redacted}</span> <span style="opacity:.5">${x.reg}</span></div>`).join('')}</div><div class="arrow">↓</div>`;
+  } else {
+    html+=`<div class="stage" style="border-color:#14532d;background:#052e16"><div class="sl">Etapa 2 — Escáner DLP · Sin hallazgos</div><span style="color:#4ade80">Texto limpio detectado</span></div><div class="arrow">↓</div>`;
+  }
+  flowEl.innerHTML=html;
+  await new Promise(r=>setTimeout(r,400));
+
+  const evId=`EVT-${Date.now().toString().slice(-6)}`;
+  let blocked=false,blockReason='';
+  if(dlpActive&&f.length&&['critical','high'].includes(r)){blocked=true;blockReason=`DLP corporativo: ${f.length} tipo(s) de datos sensibles. Bloqueado según política PI-007.`;}
+  else if(dlpActive&&!prov.dpa){blocked=true;blockReason=`Proveedor "${prov.name}" sin DPA firmado. Bloqueado según GDPR Art. 28.`;}
+
+  if(blocked){
+    html+=`<div class="stage" style="border-color:#14532d;background:#052e16"><div class="sl">Etapa 3 — TRANSMISIÓN BLOQUEADA 🔒</div><span style="color:#4ade80">🛡️ ${blockReason}<br>Evento: ${evId}</span></div><div class="arrow">↓</div>`;
+    html+=`<div class="banner-g"><div style="color:#4ade80;font-size:13px;font-weight:600;margin-bottom:4px">✅ Dato protegido — No salió del perímetro</div><div style="color:#86efac;font-size:11px">El incidente queda registrado. El empleado recibirá notificación del bloqueo.</div></div>`;
+  } else {
+    const bc=f.length&&['critical','high'].includes(r)?'7f1d1d':'14532d';
+    html+=`<div class="stage" style="border-color:#${bc}"><div class="sl">Etapa 3 — ${f.length?'DATO TRANSMITIDO AL PROVEEDOR EXTERNO':'Transmisión completada'}</div><span>Proveedor: ${prov.name} · ${prov.jur} · DPA: ${prov.dpa?'Sí':'NO ⛔'}<br>Retención: ${prov.ret} · Hash: ${evId}</span></div><div class="arrow">↓</div>`;
+    if(f.length){
+      const ths=[...new Set(f.flatMap(x=>x.threats))];
+      html+=`<div class="banner-r"><div style="color:#f87171;font-size:13px;font-weight:700;margin-bottom:10px">⚠️ DATO DETECTADO · DATO TRANSMITIDO · RIESGO REGISTRADO</div>
+        <div style="margin-bottom:5px;font-size:11px;color:#fca5a5">Dato detectado: ${[...new Set(f.map(x=>x.cat))].map(c=>`<span class="badge b-r">${c}</span>`).join(' ')}</div>
+        <div style="margin-bottom:5px;font-size:11px;color:#fca5a5">Dato transmitido a: <span class="badge b-o">${prov.name}</span> <span class="badge b-b">${prov.jur}</span> <span class="badge ${prov.dpa?'b-g':'b-r'}">${prov.dpa?'DPA firmado':'Sin DPA ⛔'}</span></div>
+        <div style="margin-bottom:5px;font-size:11px;color:#fca5a5">Proveedor implicado: <span class="badge b-o">${prov.name}</span></div>
+        <div style="font-size:11px;color:#fca5a5">Riesgo generado: ${ths.map(t=>`<span class="badge b-p">${t}</span>`).join(' ')}</div>
+      </div>`;
+    } else {
+      html+=`<div class="banner-g"><div style="color:#4ade80;font-weight:500">✅ Transmisión sin datos sensibles · Riesgo bajo</div></div>`;
+    }
+  }
+  auditLog.unshift({id:evId,ts:new Date().toLocaleTimeString(),actor,provider:prov.name,jur:prov.jur,dpa:prov.dpa,nf:f.length,risk:r,blocked,cats:[...new Set(f.map(x=>x.cat))],threats:[...new Set(f.flatMap(x=>x.threats))]});
+  flowEl.innerHTML=html;
+}
+
+
+// ── SANDBOX DLP ─────────────────────────────────────────────────
+function buildRulesEditor(){
+  const riskCls={critical:'b-r',high:'b-o',medium:'b-y',low:'b-g'};
+  document.getElementById('dlp-rules-editor').innerHTML=DLP.map((r,i)=>`
+    <div class="dlp-rule-row ${DLP_ACTIVE[i]?'':'disabled'}" id="dlpr-${i}">
+      <span style="font-size:11px;color:${DLP_ACTIVE[i]?'var(--text)':'var(--muted)'}">${r.name}</span>
+      <span class="badge ${riskCls[r.risk]||'b-gr'}">${r.risk}</span>
+      <span style="font-size:10px;color:var(--muted)">${r.reg}</span>
+      <input type="checkbox" style="width:auto;cursor:pointer" ${DLP_ACTIVE[i]?'checked':''} onchange="toggleRule(${i},this)">
+    </div>`).join('');
+}
+
+function toggleRule(i,chk){
+  DLP_ACTIVE[i]=chk.checked;
+  const row=document.getElementById('dlpr-'+i);
+  row.classList.toggle('disabled',!chk.checked);
+  row.querySelector('span').style.color=chk.checked?'var(--text)':'var(--muted)';
+  updateSb();
+}
+
+function toggleAllRules(val){
+  DLP_ACTIVE=DLP.map(()=>val);
+  buildRulesEditor();
+  updateSb();
+}
+
+function loadSbTpl(key){
+  const sc=SC[key]();
+  document.getElementById('sb-text').value=sc.text;
+  updateSb();
+}
+
+function updateSb(){
+  const txt=document.getElementById('sb-text').value;
+  document.getElementById('sb-chars').textContent=txt.length+' chars';
+  if(!txt.trim()){
+    document.getElementById('sb-risk-live').innerHTML='';
+    document.getElementById('sb-findings').innerHTML='<div style="color:var(--muted);font-size:11px">Escribe texto para analizar...</div>';
+    document.getElementById('sb-highlighted').textContent='El texto resaltado aparecerá aquí...';
+    document.getElementById('sb-score').innerHTML='';
+    const out=document.getElementById('sb-outcome');
+    out.className='sb-out';out.textContent='Escribe texto para ver el resultado simulado...';
+    return;
+  }
+  const f=scanText(txt),r=oRisk(f),rc=rColor(r);
+
+  // Live badge
+  document.getElementById('sb-risk-live').innerHTML=f.length
+    ?`<span style="color:${rc};font-weight:600;font-family:var(--mono)">⚡ ${f.length} hallazgo(s) — ${r.toUpperCase()}</span>`
+    :'<span style="color:#4ade80;font-family:var(--mono)">✓ Sin datos sensibles</span>';
+
+  // Findings list
+  document.getElementById('sb-findings').innerHTML=f.length
+    ?f.map(x=>`<div class="finding-row">${rBadge(x.risk)}<span style="color:#e2e8f0;flex:1">${x.name}</span><span style="color:#64748b;font-family:monospace;font-size:10px">${x.redacted}</span><span style="color:#475569;font-size:10px">${x.reg}</span></div>`).join('')
+    :'<div style="font-size:11px;color:#4ade80;padding:5px 0">✓ Sin datos sensibles con las reglas activas</div>';
+
+  // Highlighted text
+  let hl=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const clsMap={critical:'hl-crit',high:'hl-high',medium:'hl-med'};
+  // Mark in reverse to preserve indices
+  const sorted=[...f].sort((a,b)=>(b.pos||0)-(a.pos||0));
+  sorted.forEach(item=>{
+    if(!clsMap[item.risk]) return;
+    const safe=item.matched.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const marked=`<span class="${clsMap[item.risk]}">${safe}</span>`;
+    const idx=hl.indexOf(safe);
+    if(idx>=0) hl=hl.slice(0,idx)+marked+hl.slice(idx+safe.length);
+  });
+  document.getElementById('sb-highlighted').innerHTML=hl;
+
+  // Score
+  const sw={critical:10,high:5,medium:2,low:1};
+  const score=Math.min(100,f.reduce((s,x)=>s+(sw[x.risk]||1),0));
+  const sc=score>=50?'#f87171':score>=20?'#fb923c':'#fbbf24';
+  document.getElementById('sb-score').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px">
+      <span style="font-size:22px;font-weight:600;font-family:var(--mono);color:${sc}">${score}</span>
+      <span style="font-size:11px;color:var(--muted)">/100 — riesgo acumulado</span>
+    </div>
+    <div class="score-track"><div class="score-fill" style="width:${score}%;background:${sc}"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px">${f.filter(x=>x.risk==='critical').length} críticos · ${f.filter(x=>x.risk==='high').length} altos · ${f.filter(x=>x.risk==='medium').length} medios</div>`;
+
+  // Outcome simulation
+  const pk=document.getElementById('sb-prov').value;
+  const prov=PROVS[pk]||PROVS.openai;
+  const dlpOn=document.getElementById('sb-dlp').value==='1';
+  const outEl=document.getElementById('sb-outcome');
+  if(dlpOn && f.length && ['critical','high'].includes(r)){
+    outEl.className='sb-out blk';
+    outEl.innerHTML=`🔒 <strong>BLOQUEADO POR DLP</strong><br>${f.length} tipo(s) de datos sensibles detectados.<br>El texto NO salió del perímetro corporativo.<br>Evento registrado en el audit log.`;
+  } else if(f.length){
+    outEl.className='sb-out att';
+    outEl.innerHTML=`⚠ <strong>TRANSMITIDO — ${r.toUpperCase()}</strong><br>Proveedor: ${prov.name}<br>Jurisdicción: ${prov.jur} · DPA: ${prov.dpa?'Sí':'NO ⛔'}<br>Retención: ${prov.ret}<br>Dato(s): ${[...new Set(f.map(x=>x.cat))].slice(0,2).join(', ')} transmitido(s).`;
+  } else {
+    outEl.className='sb-out ok';
+    outEl.innerHTML=`✅ Sin datos sensibles detectados · Riesgo bajo<br>Proveedor: ${prov.name}`;
+  }
+}
+
+// ── TRACE ───────────────────────────────────────────────────────
+function renderTrace(){
+  const p=auditLog.filter(e=>!e.blocked).length,bl=auditLog.filter(e=>e.blocked).length,crit=auditLog.filter(e=>e.risk==='critical').length,nd=auditLog.filter(e=>!e.dpa).length;
+  document.getElementById('trace-metrics').innerHTML=[{n:p,l:'Transmitidos',c:'#f87171'},{n:bl,l:'Bloqueados',c:'#4ade80'},{n:crit,l:'Riesgo crítico',c:'#f87171'},{n:nd,l:'Sin DPA',c:'#fb923c'},{n:auditLog.length,l:'Total eventos',c:'#e2e8f0'}].map(m=>`<div class="mbox"><div class="mnum" style="color:${m.c}">${m.n}</div><div class="mlbl">${m.l}</div></div>`).join('');
+  if(!auditLog.length){document.getElementById('trace-events').innerHTML='<div style="color:#334155;font-size:12px;padding:20px 0">Sin eventos. Ejecuta envíos en la pestaña Demo.</div>';document.getElementById('trace-providers').innerHTML='';document.getElementById('trace-actors').innerHTML='';return;}
+  document.getElementById('trace-events').innerHTML=auditLog.slice(0,10).map(e=>`<div class="ev-card ${e.blocked?'blkd':e.risk==='critical'?'crit':'high'}"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#475569;font-size:10px">${e.id} · ${e.ts}</span>${rBadge(e.risk)} ${e.blocked?'<span class="badge b-g">🔒 BLOQUEADO</span>':'<span class="badge b-r">⚡ TRANSMITIDO</span>'}</div><div style="margin-bottom:3px;font-size:11px"><span style="color:#64748b">Actor:</span> <span style="color:#e2e8f0">${e.actor}</span> → <span style="color:#e2e8f0">${e.provider}</span> <span class="badge ${e.dpa?'b-g':'b-r'}">${e.dpa?'DPA ✓':'Sin DPA'}</span></div><div>${e.cats.map(c=>`<span class="badge b-r" style="font-size:9.5px">${c}</span>`).join(' ')}</div></div>`).join('');
+  const bp={};auditLog.forEach(e=>bp[e.provider]=(bp[e.provider]||0)+1);
+  document.getElementById('trace-providers').innerHTML=Object.entries(bp).map(([p,n])=>`<div style="margin:4px 0;font-size:11px"><div style="margin-bottom:2px">${p.slice(0,35)}</div><div style="background:#1e293b;border-radius:4px;height:10px"><div style="background:#ef4444;width:${Math.min(100,n*25)}%;height:100%;border-radius:4px"></div></div><div style="color:#64748b;font-size:10px">${n} evento(s)</div></div>`).join('');
+  const ba={};auditLog.forEach(e=>ba[e.actor]=(ba[e.actor]||0)+1);
+  document.getElementById('trace-actors').innerHTML=Object.entries(ba).map(([a,n])=>`<div style="padding:3px 0;border-bottom:1px solid #1e293b;font-size:11px"><span style="color:#e2e8f0">${a}</span> · ${n} envío(s)</div>`).join('');
+}
+
+
+function clearTrace(){auditLog=[];renderTrace();}
+
+// ── THREATS ─────────────────────────────────────────────────────
+function renderThreats(){
+  const T=[{icon:'👤',title:'Shadow AI',color:'#7c3aed',risk:'high',desc:'Uso de herramientas de IA no aprobadas, fuera del control de TI y Seguridad.',ex:['ChatGPT personal','Plugins IDE sin auditar','IA gratuita sin DPA']},
+    {icon:'💧',title:'Fuga accidental de datos',color:'#dc2626',risk:'critical',desc:'Empleados pegan PII, datos financieros o código en prompts sin darse cuenta del riesgo.',ex:['Expedientes RRHH','Contratos clientes','Datos bancarios']},
+    {icon:'🔗',title:'Dependencia de proveedor',color:'#d97706',risk:'high',desc:'Procesos críticos sobre APIs externas sin plan de contingencia.',ex:['Deprecation del modelo','Cambios de pricing','Caída del servicio']},
+    {icon:'🌐',title:'Pérdida de perímetro',color:'#0891b2',risk:'high',desc:'Datos corporativos salen hacia modelos que conocen la arquitectura interna.',ex:['IPs internas','Topología de red','Documentos clasificados']},
+    {icon:'⚖️',title:'Incumplimiento normativo',color:'#db2777',risk:'critical',desc:'Envío de datos a proveedores sin DPA viola GDPR y otras regulaciones.',ex:['Art. 28 GDPR — sin DPA','Art. 9 — datos especiales','PCI-DSS — tarjetas']}];
+  document.getElementById('threats-grid').innerHTML=T.map(t=>`<div class="threat-card" style="border-top:3px solid ${t.color}"><div style="font-size:1.2rem;margin-bottom:6px">${t.icon}</div><div style="font-size:12px;font-weight:600;margin-bottom:5px">${t.title}</div><div style="margin-bottom:6px">${rBadge(t.risk)}</div><div style="font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">${t.desc}</div>${t.ex.map(e=>`<div style="font-size:10.5px;color:#64748b;padding:1px 0">· ${e}</div>`).join('')}</div>`).join('');
+  const M=[['RRHH — evaluaciones','ChatGPT personal','PII + Salud','critical','GDPR Art.9'],['Finanzas — M&A','Copilot sin DLP','Financiero + PII','critical','Market Abuse'],['IT — debug código','GitHub Copilot','Código + Credenciales','high','Trade secrets'],['Jurídico — contratos','IA personal gratuita','PII + Financiero + NDA','critical','GDPR + NDA'],['Soporte — resúmenes','Copilot configurado','PII parcial','medium','GDPR Art.6'],['Dev — docs técnicas','IA interna on-premise','Técnico interno','low','Política interna']];
+  document.getElementById('risk-matrix').innerHTML=M.map(r=>`<tr style="border-bottom:1px solid #1e293b"><td style="padding:6px 8px;color:#e2e8f0">${r[0]}</td><td style="padding:6px 8px;color:#94a3b8">${r[1]}</td><td style="padding:6px 8px;color:#94a3b8">${r[2]}</td><td style="padding:6px 8px;color:${rColor(r[3])};font-weight:600">${r[3].toUpperCase()}</td><td style="padding:6px 8px;color:#93c5fd">${r[4]}</td></tr>`).join('');
+}
+
+
+// ── CONTROLS ────────────────────────────────────────────────────
+function renderControls(){
+  const C=[{n:'01',st:'impl',title:'Escáner DLP en prompts salientes',type:'Técnico',prio:'Inmediata',effort:'Medio',desc:'Proxy que inspecciona el contenido antes de enviarlo a APIs de IA. Detecta PII, datos financieros, credenciales y código.',demo:'Activo en este laboratorio — toggle DLP arriba'},
+    {n:'02',st:'impl',title:'Registro de auditoría de transmisiones',type:'Técnico',prio:'Inmediata',effort:'Bajo',desc:'Log inmutable con hash del payload, actor, proveedor y riesgo. Sin almacenar el contenido real.',demo:'Visible en pestaña Panel de trazabilidad'},
+    {n:'03',st:'plan',title:'Inventario de herramientas de IA autorizadas',type:'Gobernanza',prio:'30 días',effort:'Medio',desc:'Registro oficial de herramientas aprobadas con DPA, jurisdicción y política de retención validados.',demo:''},
+    {n:'04',st:'plan',title:'Proceso de aprobación de nuevas herramientas',type:'Gobernanza',prio:'60 días',effort:'Alto',desc:'Workflow: solicitud → seguridad → Legal/DPO → CISO → onboarding con DPA y controles.',demo:''},
+    {n:'05',st:'plan',title:'Formación — uso seguro de IA',type:'Personas',prio:'30 días',effort:'Bajo',desc:'Módulo específico sobre Shadow AI y qué datos nunca deben pegarse en herramientas de IA.',demo:'Este laboratorio puede usarse como base'},
+    {n:'06',st:'none',title:'Clasificación automática de documentos',type:'Técnico',prio:'90 días',effort:'Alto',desc:'Sistema que clasifica como PÚBLICO/INTERNO/CONFIDENCIAL. Los documentos clasificados no pueden enviarse a IA no aprobada.',demo:''},
+    {n:'07',st:'none',title:'Alternativa corporativa de IA (tenant propio)',type:'Estratégico',prio:'6 meses',effort:'Alto',desc:'Instancia corporativa con controles de privacidad, sin salida de datos, logging y políticas definidas.',demo:''}];
+  const si={impl:'✓',plan:'→',none:'○'},sc={impl:'color:#4ade80',plan:'color:#fbbf24',none:'color:#475569'};
+  const tc={Técnico:'b-b',Gobernanza:'b-p',Personas:'b-g',Estratégico:'b-o'};
+  const pc={'Inmediata':'b-r','30 días':'b-o','60 días':'b-y','90 días':'b-gr','6 meses':'b-gr'};
+  const ec={Alto:'b-r',Medio:'b-y',Bajo:'b-g'};
+  document.getElementById('controls-list').innerHTML=C.map(c=>`<div style="display:grid;grid-template-columns:26px 1fr;gap:10px;margin-bottom:10px;align-items:start"><div style="width:22px;height:22px;border-radius:50%;border:1px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:2px;${sc[c.st]};border-color:currentColor;background:#0f172a">${si[c.st]}</div><div class="card" style="padding:10px 14px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${c.n}. ${c.title}</span><span class="badge ${tc[c.type]||'b-gr'}">${c.type}</span><span class="badge ${pc[c.prio]||'b-gr'}">${c.prio}</span><span class="badge ${ec[c.effort]||'b-gr'}">Esfuerzo: ${c.effort}</span></div><div style="font-size:11px;color:#94a3b8;line-height:1.5">${c.desc}</div>${c.demo?`<div style="margin-top:5px;font-size:10.5px;color:#93c5fd">📌 En este lab: ${c.demo}</div>`:''}</div></div>`).join('');
+}
+
+
+// ── INIT ────────────────────────────────────────────────────────
+showScenario('rrhh');
+updateProviderInfo();
+renderTrace();
+</script>
+</body>
+</html>
